@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "references": [
+    // { "path": "packages/shared" },
+    // { "path": "packages/app" },
+    // { "path": "packages/api" },
+    // { "path": "packages/react-app" }
+    // goes into lerna.json
+    // "packages": [
+    //   "packages/*"
+    // ],
+  ],
+  "files": []
+}

@@ -1,2 +1,0 @@
-# realworld-monorepo
-Hello.
