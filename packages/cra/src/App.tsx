@@ -12,6 +12,7 @@ const App: React.FC = () => {
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
         </p>
+        <p>There are some magic moments ahead.</p>
         <a
           className="App-link"
           href="https://reactjs.org"
