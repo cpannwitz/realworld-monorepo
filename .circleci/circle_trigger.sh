@@ -11,6 +11,12 @@ CIRCLE_API="https://circleci.com/api"
 ## 1. Commit SHA of last CI build
 ############################################
 LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}?filter=completed&limit=100&shallow=true"
+echo "TOKEN --- REPOSITORY_TYPE: '${REPOSITORY_TYPE}'"
+echo "TOKEN --- CIRCLE_PROJECT_USERNAME: '${CIRCLE_PROJECT_USERNAME}'"
+echo "TOKEN --- CIRCLE_PROJECT_REPONAME: '${CIRCLE_PROJECT_REPONAME}'"
+echo "TOKEN --- CIRCLE_BRANCH: '${CIRCLE_BRANCH}'"
+echo "TOKEN --- CIRCLE_TOKEN: '${CIRCLE_TOKEN}'"
+echo "TOKEN --- LAST_COMPLETED_BUILD_URL: '${LAST_COMPLETED_BUILD_URL}'"
 LAST_COMPLETED_BUILD_SHA=`curl -Ss -u "${CIRCLE_TOKEN}:" "${LAST_COMPLETED_BUILD_URL}" | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
 
 if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
