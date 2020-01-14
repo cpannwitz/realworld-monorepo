@@ -67,9 +67,11 @@ PARAMETERS='"trigger":false'
 COUNT=0
 for PACKAGE in ${PACKAGES[@]}
 do
+  echo "TOKEN --- PACKAGE: '${PACKAGE}'"
   PACKAGE_PATH=${ROOT#.}/$PACKAGE
+  echo "TOKEN --- PACKAGE_PATH: '${PACKAGE_PATH}'"
   LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/})
-
+  echo "TOKEN --- LATEST_COMMIT_SINCE_LAST_BUILD: '${LATEST_COMMIT_SINCE_LAST_BUILD}'"
   if [[ -z "$LATEST_COMMIT_SINCE_LAST_BUILD" ]]; then
     echo -e "\e[90m  [-] $PACKAGE \e[0m"
   else
