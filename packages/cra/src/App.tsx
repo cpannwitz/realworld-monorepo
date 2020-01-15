@@ -4,11 +4,11 @@ import "./App.css";
 import { sum } from "@monotest/shared";
 
 const App: React.FC = () => {
-  const result = sum(3, 4);
+  const result = sum(3, 12);
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+        <img src={logo} className="App-logoooooooooo" alt="logo" />
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
         </p>

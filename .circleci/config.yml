@@ -1,11 +1,14 @@
 version: 2.1
 
+# iynere/compare-url is used for detecting changes between commits, so we can detect which folder changed
+orbs:
+  compare-url: iynere/compare-url@1.2.0
+
 parameters:
   # This parameter is used to trigger the main workflow
   trigger:
     type: boolean
     default: true
-
   # A parameter per package
   cra:
     type: boolean
@@ -27,12 +30,63 @@ jobs:
     executor: node
     steps:
       - checkout
-      - run:
-          name: Trigger workflows
-          command: chmod +x .circleci/circle_trigger.sh && .circleci/circle_trigger.sh
+      - compare-url/reconstruct
+      - compare-url/use:
+          custom-logic: |
+            ROOT="./packages"
+            REPOSITORY_TYPE="github"
+            CIRCLE_API="https://circleci.com/api"
+            ############################################
+            ## 2. Changed packages
+            ############################################
+            PACKAGES=$(ls ${ROOT} -l | grep ^d | awk '{print $9}')
+
+            ## The CircleCI API parameters object
+            PARAMETERS='"trigger":false'
+            COUNT=0
+            for PACKAGE in ${PACKAGES[@]}
+            do
+              if [[ $(git diff $COMMIT_RANGE --name-status | grep "$PACKAGE") ]]; then
+
+                echo -e "[+] ${PACKAGE} - MODIFIED"
+                PARAMETERS+=", \"$PACKAGE\":true"
+                COUNT=$((COUNT + 1))
+
+              else
+                echo -e "[-] ${PACKAGE} - NOT MODIFIED"
+              fi
+            done
+
+            if [[ $COUNT -eq 0 ]]; then
+              echo -e "\e[93mNo changes detected in packages. Skip triggering workflows.\e[0m"
+              exit 0
+            fi
+
+            echo -e "\e[93mChanges detected in ${COUNT} package(s).\e[0m"
+
+            ############################################
+            ## 3. CicleCI REST API call
+            ############################################
+            DATA="{ \"branch\": \"$CIRCLE_BRANCH\", \"parameters\": { $PARAMETERS } }"
+
+            URL="${CIRCLE_API}/v2/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pipeline"
+            HTTP_RESPONSE=$(curl -s -u ${CIRCLE_TOKEN}: -o response.txt -w "%{http_code}" -X POST --header "Content-Type: application/json" -d "$DATA" $URL)
+
+            if [ "$HTTP_RESPONSE" -ge "200" ] && [ "$HTTP_RESPONSE" -lt "300" ]; then
+                echo "API call succeeded."
+                echo "Response:"
+                cat response.txt
+            else
+                echo -e "\e[93mReceived status code: ${HTTP_RESPONSE}\e[0m"
+                echo "Response:"
+                cat response.txt
+                exit 1
+            fi
+          step-name: Trigger Workflows
 
   build:
     parameters:
+      # This parameter comes from calling the CircleCI API with this exact parameter value
       package_name:
         type: string
 
