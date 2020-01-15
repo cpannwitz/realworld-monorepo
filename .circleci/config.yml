@@ -1,5 +1,6 @@
 version: 2.1
 
+# iynere/compare-url is used for detecting changes between commits, so we can detect which folder changed
 orbs:
   compare-url: iynere/compare-url@1.2.0
 
@@ -8,7 +9,6 @@ parameters:
   trigger:
     type: boolean
     default: true
-
   # A parameter per package
   cra:
     type: boolean
@@ -32,7 +32,6 @@ jobs:
       - checkout
       - compare-url/reconstruct
       - compare-url/use:
-          # custom-logic: chmod +x .circleci/circle_trigger.sh && .circleci/circle_trigger.sh
           custom-logic: |
             ROOT="./packages"
             REPOSITORY_TYPE="github"
@@ -41,26 +40,20 @@ jobs:
             ## 2. Changed packages
             ############################################
             PACKAGES=$(ls ${ROOT} -l | grep ^d | awk '{print $9}')
-            echo "Searching for changes in commits [${COMMIT_RANGE}] ..."
-            echo "Commit range in shell script: $COMMIT_RANGE"
-            echo $PACKAGES
 
             ## The CircleCI API parameters object
             PARAMETERS='"trigger":false'
             COUNT=0
             for PACKAGE in ${PACKAGES[@]}
             do
-              echo "TOKEN --- PACKAGE: '${PACKAGE}'"
-              PACKAGE_PATH=${ROOT#.}/$PACKAGE
-
               if [[ $(git diff $COMMIT_RANGE --name-status | grep "$PACKAGE") ]]; then
 
-                echo "changes detected in ${PACKAGE}"
+                echo -e "[+] ${PACKAGE} - MODIFIED"
                 PARAMETERS+=", \"$PACKAGE\":true"
                 COUNT=$((COUNT + 1))
 
               else
-                echo "${PACKAGE} not modified;"
+                echo -e "[-] ${PACKAGE} - NOT MODIFIED"
               fi
             done
 
@@ -69,21 +62,12 @@ jobs:
               exit 0
             fi
 
-            echo "Changes detected in ${COUNT} package(s)."
+            echo -e "\e[93mChanges detected in ${COUNT} package(s).\e[0m"
 
             ############################################
             ## 3. CicleCI REST API call
             ############################################
             DATA="{ \"branch\": \"$CIRCLE_BRANCH\", \"parameters\": { $PARAMETERS } }"
-            echo "Triggering pipeline with data:"
-            echo -e "  $DATA"
-
-            echo "CIRCLE_API: ${CIRCLE_API}"
-            echo "REPOSITORY_TYPE: ${REPOSITORY_TYPE}"
-            echo "CIRCLE_PROJECT_USERNAME: ${CIRCLE_PROJECT_USERNAME}"
-            echo "CIRCLE_PROJECT_REPONAME: ${CIRCLE_PROJECT_REPONAME}"
-            echo "DATA: ${DATA}"
-            echo "CIRCLE_TOKEN: ${CIRCLE_TOKEN}"
 
             URL="${CIRCLE_API}/v2/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pipeline"
             HTTP_RESPONSE=$(curl -s -u ${CIRCLE_TOKEN}: -o response.txt -w "%{http_code}" -X POST --header "Content-Type: application/json" -d "$DATA" $URL)
@@ -102,6 +86,7 @@ jobs:
 
   build:
     parameters:
+      # This parameter comes from calling the CircleCI API with this exact parameter value
       package_name:
         type: string
 
