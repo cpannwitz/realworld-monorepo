@@ -1,11 +1,4 @@
 version: 2.1
-workflows:
-  version: 2
-  publish-orbs:
-    jobs:
-      - publish
-
-version: 2.1
 
 orbs:
   compare-url: iynere/compare-url@1.2.0
