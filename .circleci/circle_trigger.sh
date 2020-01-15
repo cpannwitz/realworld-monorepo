@@ -79,16 +79,6 @@ do
   else
     echo "${PACKAGE} not modified;"
   fi
-
-  # LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/})
-  # echo "TOKEN --- LATEST_COMMIT_SINCE_LAST_BUILD: '${LATEST_COMMIT_SINCE_LAST_BUILD}'"
-  # if [[ -z "$LATEST_COMMIT_SINCE_LAST_BUILD" ]]; then
-  #   echo -e "\e[90m  [-] $PACKAGE \e[0m"
-  # else
-  #   PARAMETERS+=", \"$PACKAGE\":true"
-  #   COUNT=$((COUNT + 1))
-  #   echo -e "\e[36m  [+] ${PACKAGE} \e[21m (changed in [${LATEST_COMMIT_SINCE_LAST_BUILD:0:7}])\e[0m"
-  # fi
 done
 
 if [[ $COUNT -eq 0 ]]; then
