@@ -1,5 +1,31 @@
+version: 2.1
+workflows:
+  version: 2
+  publish-orbs:
+    jobs:
+      - publish
+
+version: 2.1
+
 orbs:
   compare-url: iynere/compare-url@1.2.0
+
+parameters:
+  # This parameter is used to trigger the main workflow
+  trigger:
+    type: boolean
+    default: true
+
+  # A parameter per package
+  cra:
+    type: boolean
+    default: false
+  nest:
+    type: boolean
+    default: false
+  shared:
+    type: boolean
+    default: false
 
 executors:
   node:
@@ -7,30 +33,103 @@ executors:
       - image: circleci/node
 
 jobs:
-  publish:
+  trigger-workflows:
     executor: node
     steps:
       - checkout
       - compare-url/reconstruct
       - compare-url/use:
-          custom-logic: |
-            for FOLDER in packages/*/; do
+          custom-logic: chmod +x .circleci/circle_trigger.sh && .circleci/circle_trigger.sh
+          step-name: Trigger Workflows
 
-              package_name=$(basename $FOLDER)
+  build:
+    parameters:
+      package_name:
+        type: string
 
-              if [[ $(git diff $COMMIT_RANGE --name-status | grep "$package_name") ]]; then
+    executor: node
+    working_directory: ~/project/packages/<< parameters.package_name >>
 
-                echo "changes detected in ${package_name}"
+    steps:
+      - checkout:
+          path: ~/project
+      # This step is added only to show that we are in the package directory
+      - run:
+          name: Content
+          command: |
+            cat README.md
+            echo "<< parameters.package_name >> built." > build.txt
+      - run:
+          name: Build
+          command: echo "Build << parameters.package_name >> ..."
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - packages/<< parameters.package_name >>
 
-              else
-                echo "${package_name} not modified;"
-              fi
-            done
-          step-name: Publish modified orbs
+  deploy:
+    parameters:
+      package_name:
+        type: string
 
-version: 2.1
+    executor: node
+    working_directory: ~/project/packages/<< parameters.package_name >>
+
+    steps:
+      - attach_workspace:
+          at: ~/project
+      # This step is added to show that files are available from the build job.
+      - run:
+          name: Content to deploy
+          command: ls && cat build.txt
+      - deploy:
+          name: Deploy
+          command: echo "Deploying << parameters.package_name >> ..."
+
 workflows:
   version: 2
-  publish-orbs:
+
+  # The main workflow responsible for triggering all other workflows
+  # in which changes are detected.
+  ci:
+    when: << pipeline.parameters.trigger >>
     jobs:
-      - publish
+      - trigger-workflows
+
+  # Workflows defined for each package.
+
+  cra:
+    when: << pipeline.parameters.cra >>
+    jobs:
+      - build:
+          name: cra-build
+          package_name: cra
+      - deploy:
+          name: cra-deploy
+          package_name: cra
+          requires:
+            - cra-build
+
+  nest:
+    when: << pipeline.parameters.nest >>
+    jobs:
+      - build:
+          name: nest-build
+          package_name: nest
+      - deploy:
+          name: nest-deploy
+          package_name: nest
+          requires:
+            - nest-build
+
+  shared:
+    when: << pipeline.parameters.shared >>
+    jobs:
+      - build:
+          name: shared-build
+          package_name: shared
+      - deploy:
+          name: shared-deploy
+          package_name: shared
+          requires:
+            - shared-build
