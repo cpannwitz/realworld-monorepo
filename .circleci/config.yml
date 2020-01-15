@@ -78,6 +78,12 @@ jobs:
             echo "Triggering pipeline with data:"
             echo -e "  $DATA"
 
+            echo "CIRCLE_API: ${CIRCLE_API}"
+            echo "REPOSITORY_TYPE: ${REPOSITORY_TYPE}"
+            echo "CIRCLE_PROJECT_USERNAME: ${CIRCLE_PROJECT_USERNAME}"
+            echo "CIRCLE_PROJECT_REPONAME: ${CIRCLE_PROJECT_REPONAME}"
+            echo "DATA: ${DATA}"
+
             URL="${CIRCLE_API}/v2/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pipeline"
             HTTP_RESPONSE=$(curl -s -u ${CIRCLE_TOKEN}: -o response.txt -w "%{http_code}" -X POST --header "Content-Type: application/json" -d "$DATA" $URL)
 
