@@ -4,7 +4,7 @@ import "./App.css";
 import { sum } from "@monotest/shared";
 
 const App: React.FC = () => {
-  const result = sum(3, 2);
+  const result = sum(3, 1);
   return (
     <div className="App">
       <header className="App-header">
