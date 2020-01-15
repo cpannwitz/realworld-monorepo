@@ -61,7 +61,7 @@ CIRCLE_API="https://circleci.com/api"
 ############################################
 PACKAGES=$(ls ${ROOT} -l | grep ^d | awk '{print $9}')
 echo "Searching for changes in commits [${COMMIT_RANGE}] ..."
-echo $COMMIT_RANGE
+echo "Commit range in shell script: $COMMIT_RANGE"
 echo $PACKAGES
 
 ## The CircleCI API parameters object
